@@ -630,8 +630,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 	}
 
 	/**
-	 * Save the state of the <tt>ArrayList</tt> instance to a stream (that is,
-	 * serialize it).
+	 * 序列化方法
 	 *
 	 * @serialData The length of the array backing the <tt>ArrayList</tt>
 	 *             instance is emitted (int), followed by all of its elements
@@ -640,12 +639,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 	private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
 		// Write out element count, and any hidden stuff
 		int expectedModCount = modCount;
+		// 使用默认的序列化方法序列化非静态和未被traisent修饰的变量
 		s.defaultWriteObject();
-
-		// Write out size as capacity for behavioural compatibility with clone()
+		// 写入集合大小
 		s.writeInt(size);
 
-		// Write out all elements in the proper order.
+		// 序列化表示集合的数组
 		for (int i = 0; i < size; i++) {
 			s.writeObject(elementData[i]);
 		}
@@ -656,24 +655,21 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 	}
 
 	/**
-	 * Reconstitute the <tt>ArrayList</tt> instance from a stream (that is,
-	 * deserialize it).
+	 * 反序列化
 	 */
 	private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
 		elementData = EMPTY_ELEMENTDATA;
-
-		// Read in size, and any hidden stuff
+		// 读取写入的字段
 		s.defaultReadObject();
-
-		// Read in capacity
+		// 读取集合大小
 		s.readInt(); // ignored
 
 		if (size > 0) {
-			// be like clone(), allocate array based upon size not capacity
+			// 创建序列化数组同等大小的数组
 			ensureCapacityInternal(size);
 
 			Object[] a = elementData;
-			// Read in all elements in the proper order.
+			// 读取序列化的数组
 			for (int i = 0; i < size; i++) {
 				a[i] = s.readObject();
 			}
@@ -726,17 +722,30 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 	}
 
 	/**
-	 * An optimized version of AbstractList.Itr
+	 * 集合的迭代器实现(只能向后迭代)
 	 */
 	private class Itr implements Iterator<E> {
+		// 记录迭代的下一个元素
 		int cursor; // index of next element to return
+		// 记录上一次被迭代的元素
 		int lastRet = -1; // index of last element returned; -1 if no such
+		// 操作计数器,迭代过程中集合不能被修改
 		int expectedModCount = modCount;
 
+		/**
+		 * 是否包含下一个元素
+		 * 
+		 * @return
+		 */
 		public boolean hasNext() {
 			return cursor != size;
 		}
 
+		/**
+		 * 查询当前迭代的元素
+		 * 
+		 * @return
+		 */
 		@SuppressWarnings("unchecked")
 		public E next() {
 			checkForComodification();
@@ -746,25 +755,39 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			Object[] elementData = ArrayList.this.elementData;
 			if (i >= elementData.length)
 				throw new ConcurrentModificationException();
+			// 下一个需要迭代的位置
 			cursor = i + 1;
+			// 返回当前元素
 			return (E) elementData[lastRet = i];
 		}
 
+		/**
+		 * 删除当前迭代的元素
+		 */
 		public void remove() {
+			// 表示还未开始迭代或者是调用删除后为调用next,导致lastRet=-1
 			if (lastRet < 0)
 				throw new IllegalStateException();
 			checkForComodification();
 
 			try {
+				// 删除之前迭代的元素(也就是最后调用next的那个元素)
 				ArrayList.this.remove(lastRet);
+				// 将下一次迭代的位置置为当前迭代的位置(因为删除当前迭代的元素后，下一个元素是向前移动一格，也就是占用了删除的元素的位置)
 				cursor = lastRet;
 				lastRet = -1;
+				// 更新计数器
 				expectedModCount = modCount;
 			} catch (IndexOutOfBoundsException ex) {
 				throw new ConcurrentModificationException();
 			}
 		}
 
+		/**
+		 * 遍历迭代剩下的元素,对每个元素进行consumer处理
+		 * 
+		 * @param consumer
+		 */
 		@Override
 		@SuppressWarnings("unchecked")
 		public void forEachRemaining(Consumer<? super E> consumer) {
@@ -779,6 +802,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 				throw new ConcurrentModificationException();
 			}
 			while (i != size && modCount == expectedModCount) {
+				// 消费数据
 				consumer.accept((E) elementData[i++]);
 			}
 			// update once at end of iteration to reduce heap write traffic
@@ -787,6 +811,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			checkForComodification();
 		}
 
+		/**
+		 * true=集合被修改,false=否
+		 */
 		final void checkForComodification() {
 			if (modCount != expectedModCount)
 				throw new ConcurrentModificationException();
@@ -794,7 +821,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 	}
 
 	/**
-	 * An optimized version of AbstractList.ListItr
+	 * 迭代器，可以向前迭代,以及迭代过程中做一些添加，删除，更新的操作
 	 */
 	private class ListItr extends Itr implements ListIterator<E> {
 		ListItr(int index) {
@@ -814,6 +841,11 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			return cursor - 1;
 		}
 
+		/**
+		 * 返回前一个元素
+		 * 
+		 * @return
+		 */
 		@SuppressWarnings("unchecked")
 		public E previous() {
 			checkForComodification();
@@ -827,6 +859,11 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			return (E) elementData[lastRet = i];
 		}
 
+		/**
+		 * 修改当前迭代的元素
+		 * 
+		 * @param e
+		 */
 		public void set(E e) {
 			if (lastRet < 0)
 				throw new IllegalStateException();
@@ -839,6 +876,11 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			}
 		}
 
+		/**
+		 * 当前迭代位置添加一个元素
+		 * 
+		 * @param e
+		 */
 		public void add(E e) {
 			checkForComodification();
 
@@ -903,11 +945,16 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
 	}
 
+	/**
+	 * 
+	 * 集合的视图，所有对SubList的操作都是对原始集合的操作
+	 *
+	 */
 	private class SubList extends AbstractList<E> implements RandomAccess {
-		private final AbstractList<E> parent;
-		private final int parentOffset;
-		private final int offset;
-		int size;
+		private final AbstractList<E> parent;// 表示真实的集合
+		private final int parentOffset;// 表示视图是从原始集合那个位置开始
+		private final int offset;// 视图从哪个位置开始处理(没看出用途)
+		int size;// 从offset开始取数据的数量
 
 		SubList(AbstractList<E> parent, int offset, int fromIndex, int toIndex) {
 			this.parent = parent;
@@ -917,25 +964,51 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			this.modCount = ArrayList.this.modCount;
 		}
 
+		/**
+		 * 修改制定位置的元素
+		 * 
+		 * @param index
+		 *            表示视图的位置
+		 * @param e
+		 * @return
+		 */
 		public E set(int index, E e) {
 			rangeCheck(index);
 			checkForComodification();
+			// offset + index表示修改的视图元素对应的原始集合的位置
 			E oldValue = ArrayList.this.elementData(offset + index);
 			ArrayList.this.elementData[offset + index] = e;
 			return oldValue;
 		}
 
+		/**
+		 * 查询视图指定位置的元素
+		 * 
+		 * @param index
+		 * @return
+		 */
 		public E get(int index) {
 			rangeCheck(index);
 			checkForComodification();
 			return ArrayList.this.elementData(offset + index);
 		}
 
+		/**
+		 * 返回视图的大小
+		 * 
+		 * @return
+		 */
 		public int size() {
 			checkForComodification();
 			return this.size;
 		}
 
+		/**
+		 * 在视图的指定位置添加元素
+		 * 
+		 * @param index
+		 * @param e
+		 */
 		public void add(int index, E e) {
 			rangeCheckForAdd(index);
 			checkForComodification();
@@ -944,6 +1017,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 			this.size++;
 		}
 
+		/**
+		 * 在视图的指定位置删除元素
+		 * 
+		 * @param index
+		 * @return
+		 */
 		public E remove(int index) {
 			rangeCheck(index);
 			checkForComodification();
@@ -1279,6 +1358,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 		}
 	}
 
+	/**
+	 * 根据条件删除数据(找出需要删除的数据->将不删除的数据从索引0开始放置)
+	 * 
+	 * @param filter
+	 * @return
+	 */
 	@Override
 	public boolean removeIf(Predicate<? super E> filter) {
 		Objects.requireNonNull(filter);
@@ -1289,10 +1374,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 		final BitSet removeSet = new BitSet(size);
 		final int expectedModCount = modCount;
 		final int size = this.size;
+		// 找出需要删除的数据下标
 		for (int i = 0; modCount == expectedModCount && i < size; i++) {
 			@SuppressWarnings("unchecked")
 			final E element = (E) elementData[i];
 			if (filter.test(element)) {
+				// 将下标用bit标识
 				removeSet.set(i);
 				removeCount++;
 			}
@@ -1306,10 +1393,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 		final boolean anyToRemove = removeCount > 0;
 		if (anyToRemove) {
 			final int newSize = size - removeCount;
+			// 将留下的数据从0开始复制
 			for (int i = 0, j = 0; (i < size) && (j < newSize); i++, j++) {
 				i = removeSet.nextClearBit(i);
 				elementData[j] = elementData[i];
 			}
+			// 刪除的数据置为null,使得能被gc
 			for (int k = newSize; k < size; k++) {
 				elementData[k] = null; // Let gc do its work
 			}
@@ -1323,6 +1412,11 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 		return anyToRemove;
 	}
 
+	/**
+	 * 对所有元素做operator操作（也就是使用operator操作的结果替换原来的数据）
+	 * 
+	 * @param operator
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public void replaceAll(UnaryOperator<E> operator) {
@@ -1330,6 +1424,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 		final int expectedModCount = modCount;
 		final int size = this.size;
 		for (int i = 0; modCount == expectedModCount && i < size; i++) {
+			// 替换数据
 			elementData[i] = operator.apply((E) elementData[i]);
 		}
 		if (modCount != expectedModCount) {
@@ -1338,6 +1433,11 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, RandomAcce
 		modCount++;
 	}
 
+	/**
+	 * 排序
+	 * 
+	 * @param c
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public void sort(Comparator<? super E> c) {
