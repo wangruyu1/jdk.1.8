@@ -23,7 +23,7 @@
  *
  */
 
-package com.demo.jdk_18;
+package com.demo.jdk_18.collection;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
