@@ -1,8 +1,10 @@
 package com.demo.jdk_18;
 
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class Test {
 	public static void main(String[] args) {
@@ -12,8 +14,18 @@ public class Test {
 		map.put(3, 1);
 		map.put(4, 1);
 
-		LinkedHashMap< Integer, Integer> linkedHashMap = new LinkedHashMap<>(map);
-		System.out.println(linkedHashMap);
-		
+		TreeMap<Integer, Integer> treeMap = new TreeMap<>(new Comparator<Integer>() {
+
+			@Override
+			public int compare(Integer o1, Integer o2) {
+				if (o1 == null || o2 == null) {
+					return 1;
+				}
+				return 0;
+			}
+		});
+		treeMap.put(null, 1);
+		System.out.println(treeMap);
+
 	}
 }
