@@ -1,6 +1,7 @@
 package com.demo.jdk_18;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class Test {
@@ -11,12 +12,8 @@ public class Test {
 		map.put(3, 1);
 		map.put(4, 1);
 
-		System.out.println(map.keySet());
-		map.computeIfAbsent(5, (key) -> {
-			return key;
-		});
-		System.out.println(map.keySet());
-		
+		LinkedHashMap< Integer, Integer> linkedHashMap = new LinkedHashMap<>(map);
+		System.out.println(linkedHashMap);
 		
 	}
 }
